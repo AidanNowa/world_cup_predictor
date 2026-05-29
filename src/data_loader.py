@@ -48,6 +48,15 @@ def filter_tournaments(df: pd.DataFrame, exclude: list[str] | None=None) -> pd.D
     return filtered
 
 
+def filter_sparse_teams(df: pd.DataFrame, min_matches: int=8) -> pd.DataFrame:
+    match_counts = pd.concat([df["home_team"], df["away_team"]]).value_counts()
+    valid_teams = match_counts[match_counts >= min_matches].index
+    mask = df["home_team"].isin(valid_teams) & df["away_team"].isin(valid_teams)
+    filtered = df[mask].copy()
+    print(f"[data_loader] After sparse filter {len(filtered):,} matches {filtered['home_team'].nunique()} unique teams.")
+    return filtered
+
+
 def add_recency_weight(df: pd.DataFrame, half_life_days: int=365) -> pd.DataFrame:
     #apply exponential decay so recent matches matter more
     #weight = 0.5^(days_ago/half_life_days)
@@ -87,10 +96,11 @@ def get_all_teams(df: pd.DataFrame) -> list[str]:
     return sorted(teams.tolist())
 
 
-def load_and_prepare(filepath: str | Path, years: int=5, half_life_days: int=365, exclude_tournaments: list[str] | None=None) -> pd.DataFrame:
+def load_and_prepare(filepath: str | Path, years: int=5, half_life_days: int=365, exclude_tournaments: list[str] | None=None, min_matches: int=8) -> pd.DataFrame:
     df = load_raw_data(filepath)
     df = filter_by_date(df, years=years)
     df = filter_tournaments(df, exclude=exclude_tournaments)
+    df = filter_sparse_teams(df, min_matches=min_matches)
     df = drop_incomplete_rows(df)
     df = add_recency_weight(df, half_life_days=half_life_days)
     df = add_tournament_weight(df)
