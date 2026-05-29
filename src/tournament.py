@@ -12,17 +12,17 @@ from match_simulator import MatchSimulator, MatchResult
 #simulate full 2026 WC tournament
 
 GROUPS: dict[str, list[str]] = {
-    "A": ["Mexico",         "South Africa",   "Mali",          "New Zealand"],
-    "B": ["Argentina",      "Morocco",         "Iraq",          "Ukraine"],
-    "C": ["USA",            "Panama",          "Albania",       "Ukraine"],
-    "D": ["France",         "Japan",           "Paraguay",      "Saudi Arabia"],
-    "E": ["Spain",          "Netherlands",     "Serbia",        "Ecuador"],
-    "F": ["England",        "Senegal",         "Slovakia",      "Uzbekistan"],
-    "G": ["Brazil",         "Cameroon",        "Colombia",      "Costa Rica"],
-    "H": ["Portugal",       "Belgium",         "Nigeria",       "Egypt"],
-    "I": ["Germany",        "Australia",       "Venezuela",     "Bahrain"],
-    "J": ["Uruguay",        "South Korea",     "Canada",        "Tunisia"],
-    "K": ["Poland",         "Austria",         "Guatemala",     "Comoros"],
-    "L": ["Croatia",        "Denmark",         "Bolivia",       "Ethiopia"],
+    "A": ["Czechia", "Mexico", "South Africa", "South Korea"],
+    "B": ["Bosnia and Herzegovina", "Canada", "Qatar", "Switzerland"],
+    "C": ["Brazil", "Haiti", "Morocco", "Scotland"],
+    "D": ["Australia", "Paraguay", "Turkey", "United States"],
+    "E": ["Curacao", "Ecuador", "Germany", "Ivory Coast"],
+    "F": ["Japan", "Netherlands", "Sweden", "Tunisia"],
+    "G": ["Belgium", "Egypt", "Iran", "New Zealand"],
+    "H": ["Cape Verde", "Saudi Arabia", "Spain", "Uruguay"],
+    "I": ["France", "Iraq", "Norway", "Senegal"],
+    "J": ["Algeria", "Argentina", "Austria", "Jordan"],
+    "K": ["Colombia", "DR Congo", "Portugal", "Uzbekistan"],
+    "L": ["Croatia", "England", "Ghana", "Panama"],
 
 }
