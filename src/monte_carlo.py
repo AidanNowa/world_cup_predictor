@@ -77,13 +77,13 @@ class MonteCarloSimulator:
         df = self.to_dataframe()
 
         header = (
-            f"\n{'-'*72}\n"
+            f"\n{'-'*86}\n"
             f" 2026 FIFA World Cup Monte Carlo Results  "
             f"({self.n_simulations:,} simulations)\n"
-            f"{'-'*72}\n"
+            f"{'-'*86}\n"
             f"{'Rank':<5} {'Team':<25} {'Grp':>3}  "
-            f"{'Win%':>6}  {'Final%':>7}  {'Semi%':>6}  {'Advance%':>9}  {'1st%':>5}\n"
-            f"{'-'*72}"
+            f"{'Win%':>6}  {'Final%':>7}  {'Semi%':>6}  {'Advance%':>9}  {'1st in Group%':>5}\n"
+            f"{'-'*86}"
         )
         print(header)
 
@@ -94,10 +94,10 @@ class MonteCarloSimulator:
                 f"{row['final_pct']:>7.2f}  "
                 f"{row['semi_pct']:>6.2f}  "
                 f"{row['group_advance_pct']:>9.2f}  "
-                f"{row['group_win_pct']:>5.2f}"
+                f"{row['group_win_pct']:>13.2f}"
             )
 
-        print(f"{'-'*72}\n")
+        print(f"{'-'*86}\n")
 
     
     def group_stage_report(self) -> None:
@@ -109,7 +109,7 @@ class MonteCarloSimulator:
         print(f"{'-'*60}")
 
         for group, teams in GROUPS.items():
-            print(f"\n   -----Group {group}-----")
+            print(f"\n   -------Group {group}--------")
             print(f"   {'Team'} {'1st%':>6}  {'Advance%':>9}")
             print(f"   {'-'*44}")
             group_df = df[df["group"] == group].sort_values("group_advance_pct", ascending=False)
