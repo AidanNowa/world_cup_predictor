@@ -128,6 +128,28 @@ class TournamentSimulator:
         )
 
 
+    def predict_tournament(self) -> TournamentResult:
+        #build sinle most likely tournament bracket for bracket challenges
+        #select most likely winner not winner from single instance
+        #award draw if P(draw) is highest
+        group_standings, group_results = self._predict_all_groups()
+
+        qualifiers, advancing_thirds = self._determine_qualifiers(group_standings)
+
+        bracket = self._build_bracket(qualifiers, advancing_thirds)
+        knockout_results, finalist_a, finalist_b, sf_losers = self._predict_knockout_round(bracket)
+
+        final_result = self._predict_knockout_match(finalist_a, finalist_b)
+        knockout_results.append(final_result)
+
+        return TournamentResult(
+            winner=final_result.winner,
+            runner_up=final_result.loser(),
+            third_place=sf_losers,
+            group_standings=group_standings,
+            knockout_results=knockout_results
+        )
+
     #group stage functions
     def _simulate_all_groups(self) -> tuple[dict[str, list[TeamStanding]], list[MatchResult]]:
         all_standings: dict[str, list[TeamStanding]] = {}
@@ -218,6 +240,82 @@ class TournamentSimulator:
 
         return result_list
 
+    
+    def _predict_group(self, teams: list[str]) -> tuple[list[TeamStandings], list[MatchResults]]:
+        standings = {team: TeamStandings(team=team) for team in teams}
+        results: list[MatchResult] = []
+        
+        for i in range(len(teams)):
+            for j in range(i + 1, len(teams)):
+                team_a, team_b = teams[i], teams[j]
+                result = self._predict_group_match(team_a, team_b)
+                results.append(result)
+                standings[team_a].update(result.goals_a, result.goals_b)
+                standings[team_b].update(result.goals_b, result.goals_a)
+
+        sorted_standings = self._sort_standings(list(standings.values()), results)
+        return sorted_standings, results
+
+
+    def _predict_group_match(self, team_a: str, team_b: str) -> MatchResult:
+        probs = self.simulator.predict_group_probs(team_a, team_b)
+        lambda_a, lambda_b = self.simulator.model.predict_lambda(team_a, team_b)
+
+        goals_a = round(lambda_a)
+        goals_b = round(lambda_b)
+
+        #determine most likely outcome and adjust scoreline if needed
+        best_outcome = max(probs, key=probs.get)
+        
+        if best_outcome == "win" and goals_a <= goals_b:
+            goals_a = goals_b + 1
+        elif best_outcome == "loss" and goals_b <= goals_a:
+            goals_b = goals_a + 1
+        elif best_outcome =- "draw":
+            score = min(goals_a, goals_b)
+            goals_a = goals_b = score
+        
+        winner = None #stay None if draw 
+        if best_outcome == "win":
+            winner = team_a
+        elif best_outcome == "loss":
+            winner = team_b 
+        
+        return MatchResult(
+            team_a=team_a,
+            team_b=team_b,
+            goals_a=goals_a,
+            goals_b=goals_b,
+            winner=winner,
+            is_knockout=False
+        )
+
+    
+    def _predict_knockout_match(self, team_a: str, team_b: str) -> MatchResult:
+        probs = self.simulator.predict_group_probs(team_a, team_b)
+        lambda_a, lambda_b = self.simulator.model.predict_lambda(team_a, team_b)
+
+        goals_a = round(lambda_a)
+        goals_b = round(lambda_b)
+
+        if probs["win"] >= probs["loss"]:
+            winner = team_a
+            if goals_a <= goals_b:
+                goals_a = goals_b + 1
+        else:
+            winner = team_b
+            if goals_b <= goals_a:
+                goals_b = goals_a + 1
+
+        return MatchResult(
+            team_a=team_a,
+            team_b=team_b,
+            goals_a=goals_a,
+            goals_b=goals_b,
+            winner=winner,
+            is_knockout=True
+        )
+        
 
     def _determine_qualifiers(self, group_standings: dict[str, list[TeamStanding]]) -> tuple[dict[str, dict[str, str]], list[TeamStanding]]:
         #determine 32 advancing teams (1st and 2nd plus 8 best 3rd place)
