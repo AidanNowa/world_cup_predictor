@@ -210,3 +210,325 @@ Group Stage Probabilities (10,000 simulations)
    
    Panama   0.99      10.33
 
+
+
+
+>>> PREDICTED BRACKET
+
+--- Group A ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Mexico                   3  3  0  0   6   3    3    9
+
+✓ South Korea              3  2  0  1   5   4    1    6
+
+  Czech Republic           3  1  0  2   4   5   -1    3
+
+  South Africa             3  0  0  3   3   6   -3    0
+
+
+
+--- Group B ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Switzerland              3  3  0  0   8   3    5    9
+
+✓ Canada                   3  2  0  1   5   4    1    6
+
+  Bosnia and Herzegovina   3  1  0  2   4   5   -1    3
+
+  Qatar                    3  0  0  3   3   8   -5    0
+
+
+
+--- Group C ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Morocco                  3  3  0  0   7   2    5    9
+
+✓ Brazil                   3  2  0  1   7   4    3    6
+
+  Scotland                 3  1  0  2   5   5    0    3
+
+  Haiti                    3  0  0  3   2  10   -8    0
+
+
+
+--- Group D ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Turkey                   3  3  0  0   6   3    3    9
+
+✓ Australia                3  1  1  1   4   4    0    4
+
+  Paraguay                 3  1  1  1   4   4    0    4
+
+  United States            3  0  0  3   3   6   -3    0
+
+
+
+--- Group E ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+
+-------------------------------------------------------
+
+✓ Germany                  3  2  1  0   7   2    5    7
+
+✓ Ecuador                  3  1  2  0   3   1    2    5
+
+  Ivory Coast              3  1  1  1   2   2    0    4
+
+  Curaçao                  3  0  0  3   0   7   -7    0
+
+
+
+--- Group F ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+
+-------------------------------------------------------
+
+✓ Netherlands              3  3  0  0   7   3    4    9
+
+✓ Japan                    3  2  0  1   5   4    1    6
+
+  Tunisia                  3  1  0  2   4   5   -1    3
+
+  Sweden                   3  0  0  3   3   7   -4    0
+
+
+
+--- Group G ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Belgium                  3  3  0  0   6   3    3    9
+
+✓ Iran                     3  2  0  1   5   4    1    6
+
+  Egypt                    3  1  0  2   4   5   -1    3
+
+  New Zealand              3  0  0  3   3   6   -3    0
+
+
+
+--- Group H ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Spain                    3  3  0  0   9   1    8    9
+
+✓ Uruguay                  3  2  0  1   4   2    2    6
+
+  Saudi Arabia             3  1  0  2   2   5   -3    3
+
+  Cape Verde               3  0  0  3   1   8   -7    0
+
+
+
+--- Group I ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ France                   3  3  0  0   6   2    4    9
+
+✓ Norway                   3  2  0  1   6   4    2    6
+
+  Senegal                  3  1  0  2   4   5   -1    3
+
+  Iraq                     3  0  0  3   2   7   -5    0
+
+
+
+--- Group J ---
+
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Argentina                3  3  0  0   6   3    3    9
+
+✓ Austria                  3  2  0  1   5   4    1    6
+
+  Algeria                  3  1  0  2   4   5   -1    3
+
+  Jordan                   3  0  0  3   3   6   -3    0
+
+
+
+--- Group K ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ Portugal                 3  3  0  0   6   3    3    9
+
+✓ Colombia                 3  2  0  1   5   4    1    6
+
+  Uzbekistan               3  0  1  2   3   5   -2    1
+
+  DR Congo                 3  0  1  2   3   5   -2    1
+
+
+
+--- Group L ---
+
+Team                       P  W  D  L  GF  GA   GD  Pts
+
+-------------------------------------------------------
+
+✓ England                  3  3  0  0   7   1    6    9
+
+✓ Croatia                  3  2  0  1   5   4    1    6
+
+  Ghana                    3  1  0  2   3   5   -2    3
+
+  Panama                   3  0  0  3   2   7   -5    0
+
+
+
+=======================================================
+
+   2026 WORLD CUP  (PREDICTED BRACKET)
+
+=======================================================
+
+
+
+-------------------------------------------------------
+
+   Round of 32
+
+-------------------------------------------------------
+
+   South Korea 1 - 2 Canada  -> Canada
+
+   Germany 2 - 1 Paraguay  -> Germany
+
+   Netherlands 2 - 1 Brazil  -> Netherlands
+
+   Morocco 2 - 1 Japan  -> Morocco
+
+   France 2 - 1 Paraguay  -> France
+
+   Ecuador 1 - 2 Norway  -> Norway
+
+   Mexico 2 - 1 Ivory Coast  -> Mexico
+
+   England 1 - 0 Ivory Coast  -> England
+
+   Turkey 2 - 1 Ivory Coast  -> Turkey
+
+   Belgium 2 - 1 Ivory Coast  -> Belgium
+
+   Colombia 2 - 1 Croatia  -> Colombia
+
+   Spain 2 - 1 Austria  -> Spain
+
+   Switzerland 2 - 1 Ivory Coast  -> Switzerland
+
+   Argentina 2 - 1 Uruguay  -> Argentina
+
+   Portugal 2 - 1 Paraguay  -> Portugal
+
+   Australia 2 - 1 Iran  -> Australia
+
+
+
+-------------------------------------------------------
+
+   Round of 16
+
+-------------------------------------------------------
+
+   Canada 1 - 2 Germany  -> Germany
+
+   Netherlands 1 - 2 Morocco  -> Morocco
+
+   France 2 - 1 Norway  -> France
+
+   Mexico 0 - 2 England  -> England
+
+   Turkey 1 - 2 Belgium  -> Belgium
+
+   Colombia 1 - 2 Spain  -> Spain
+
+   Switzerland 1 - 2 Argentina  -> Argentina
+
+   Portugal 2 - 1 Australia  -> Portugal
+
+
+
+-------------------------------------------------------
+
+   Quarter-Finals
+
+-------------------------------------------------------
+
+   Germany 1 - 2 Morocco  -> Morocco
+
+   France 1 - 2 England  -> England
+
+   Belgium 1 - 2 Spain  -> Spain
+
+   Argentina 2 - 1 Portugal  -> Argentina
+
+
+
+-------------------------------------------------------
+
+   Semi-Finals
+
+-------------------------------------------------------
+
+   Morocco 1 - 2 England  -> England
+
+   Spain 2 - 1 Argentina  -> Spain
+
+
+
+-------------------------------------------------------
+
+   Final
+
+-------------------------------------------------------
+
+   England 1 - 2 Spain  -> Spain
+
+
+
+=======================================================
+
+
+
+Winner: Spain
+
+Runner-up: England
+
+Third place teams: Morocco, Argentina
+
+=======================================================
+

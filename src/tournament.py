@@ -137,7 +137,7 @@ class TournamentSimulator:
         qualifiers, advancing_thirds = self._determine_qualifiers(group_standings)
 
         bracket = self._build_bracket(qualifiers, advancing_thirds)
-        knockout_results, finalist_a, finalist_b, sf_losers = self._predict_knockout_round(bracket)
+        knockout_results, finalist_a, finalist_b, sf_losers = self._predict_knockout_rounds(bracket)
 
         final_result = self._predict_knockout_match(finalist_a, finalist_b)
         knockout_results.append(final_result)
@@ -241,15 +241,28 @@ class TournamentSimulator:
         return result_list
 
     
-    def _predict_group(self, teams: list[str]) -> tuple[list[TeamStandings], list[MatchResults]]:
-        standings = {team: TeamStandings(team=team) for team in teams}
+    def _predict_all_groups(self) -> tuple[dict[str, list[TeamStanding]], list[MatchResult]]:
+        all_standings: dict[str, list[TeamStanding]] = {}
+        all_results: list[MatchResult] = []
+
+        for group_letter, teams in self.groups.items():
+            standings, results = self._predict_group(teams)
+            all_standings[group_letter] = standings
+            all_results.extend(results)
+    
+        return all_standings, all_results
+
+
+    def _predict_group(self, teams: list[str]) -> tuple[list[TeamStanding], list[MatchResult]]:
+        #predict all 6 group matches by taking the most probable outcome
+        standings = {team: TeamStanding(team=team) for team in teams}
         results: list[MatchResult] = []
-        
+
         for i in range(len(teams)):
             for j in range(i + 1, len(teams)):
                 team_a, team_b = teams[i], teams[j]
                 result = self._predict_group_match(team_a, team_b)
-                results.append(result)
+                results.append(result)  
                 standings[team_a].update(result.goals_a, result.goals_b)
                 standings[team_b].update(result.goals_b, result.goals_a)
 
@@ -269,16 +282,16 @@ class TournamentSimulator:
         
         if best_outcome == "win" and goals_a <= goals_b:
             goals_a = goals_b + 1
-        elif best_outcome == "loss" and goals_b <= goals_a:
+        elif best_outcome == "lose" and goals_b <= goals_a:
             goals_b = goals_a + 1
-        elif best_outcome =- "draw":
+        elif best_outcome == "draw":
             score = min(goals_a, goals_b)
             goals_a = goals_b = score
         
         winner = None #stay None if draw 
         if best_outcome == "win":
             winner = team_a
-        elif best_outcome == "loss":
+        elif best_outcome == "lose":
             winner = team_b 
         
         return MatchResult(
@@ -298,7 +311,7 @@ class TournamentSimulator:
         goals_a = round(lambda_a)
         goals_b = round(lambda_b)
 
-        if probs["win"] >= probs["loss"]:
+        if probs["win"] >= probs["lose"]:
             winner = team_a
             if goals_a <= goals_b:
                 goals_a = goals_b + 1
@@ -316,6 +329,29 @@ class TournamentSimulator:
             is_knockout=True
         )
         
+
+    def _predict_knockout_rounds(self, bracket: list[tuple[str, str]]) -> tuple[list[MatchResult], str, str, list[str]]:
+        all_results: list[MatchResult] = []
+        teams = bracket
+        round_names = ["Round of 32", "Round of 16", "Quarter-Finals", "Semi-Finals"]
+        round_idx = 0
+        sf_losers: list[str]=[]
+
+        while len(teams) > 1:
+            round_winners = []
+            
+            for team_a, team_b in teams:
+                result = self._predict_knockout_match(team_a, team_b)
+                all_results.append(result)
+                round_winners.append(result.winner)
+
+                if round_idx < len(round_names) and round_names[round_idx] == "Semi-Finals":
+                    sf_losers.append(result.loser())
+
+            teams = [(round_winners[i], round_winners[i + 1]) for i in range(0, len(round_winners) - 1, 2)]
+            round_idx += 1
+        finalist_a, finalist_b = teams[0]
+        return all_results, finalist_a, finalist_b, sf_losers
 
     def _determine_qualifiers(self, group_standings: dict[str, list[TeamStanding]]) -> tuple[dict[str, dict[str, str]], list[TeamStanding]]:
         #determine 32 advancing teams (1st and 2nd plus 8 best 3rd place)
@@ -421,12 +457,52 @@ def print_knockout_results(results: list[MatchResult]) -> None:
     for r in results:
         print(f"  {r.summary()}")
 
+
+def print_bracket(result: TournamentResult) -> None:
+    results = result.knockout_results
+    toal = len(results)
+
+    round_definitions = [
+        ("Round of 32", 16),
+        ("Round of 16", 8),
+        ("Quarter-Finals", 4),
+        ("Semi-Finals", 2),
+        ("Final", 1)
+    ]
+    
+    idx = 0
+    print("\n" + "=" * 55)
+    print("   2026 WORLD CUP  (PREDICTED BRACKET)")
+    print("=" * 55)
+
+    for round_name, n_matches in round_definitions:
+        round_results = results[idx: idx + n_matches]
+        if not round_results:
+            break
+        print("\n" + '-' * 55)
+        print(f"   {round_name}")
+        print('-' * 55)
+        for r in round_results:
+            winner = "DRAW"
+            if r.winner: 
+                win_indicator = f"-> {r.winner}"
+            print(f"   {r.team_a} {r.goals_a} - {r.goals_b} { r.team_b}  {win_indicator}")
+        idx += n_matches
+
+    print("\n" + "=" * 55)
+    print(f"\nWinner: {result.winner}")
+    print(f"Runner-up: {result.runner_up}")
+    print(f"Third place teams: {', '.join(result.third_place)}") 
+    print("=" * 55)
+
 if __name__ == "__main__":
     df = load_and_prepare(Path("data/results.csv"))
     model = PoissonModel().fit(df)
     simulator = MatchSimulator(model)
 
     tournament = TournamentSimulator(simulator)
+    
+    print("\n>>> RANDOM SIMULATION (sampled outcome)")
     result = tournament.simulate()
 
     print(f"\nWinner: {result.winner}")
@@ -436,7 +512,10 @@ if __name__ == "__main__":
     print_group_standings(result.group_standings)
     print_knockout_results(result.knockout_results)
 
-
+    print("\n>>> PREDICTED BRACKET")
+    prediction = tournament.predict_tournament()
+    print_group_standings(prediction.group_standings)
+    print_bracket(prediction)
 
 
 
