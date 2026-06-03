@@ -19,8 +19,8 @@ Every team gets two fitted parameters:
  
 | Parameter  | Meaning                                            |
 |------------|----------------------------------------------------|
-| `attack`   | Tendency to score — higher means more goals scored |
-| `defense`  | Tendency to concede — lower means fewer goals let in |
+| `attack`   | Tendency to score (higher = more goals scored) |
+| `defense`  | Tendency to concede (lower = fewer goals let in) |
  
 These are estimated by **maximum likelihood** over ~5,000+ historical international matches, weighted by both **recency** (recent matches matter more) and **match importance** (World Cup > friendly).
  
@@ -37,7 +37,15 @@ A full 2026 World Cup is simulated end-to-end:
 ```
 Group Stage (12 groups × 6 matches)
     ↓  Top 2 per group + best 8 third-place teams advance
-Round of 32  →  Round of 16  →  Quarter-Finals  →  Semi-Finals  →  Final
+Round of 32
+    ↓ 
+Round of 16
+    ↓
+Quarter-Finals
+    ↓
+Semi-Finals
+    ↓
+  Final
 ```
  
 Running **10,000 full simulations** produces win probabilities for every team.
