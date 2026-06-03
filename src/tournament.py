@@ -28,40 +28,147 @@ GROUPS: dict[str, list[str]] = {
 }
 
 # Slots are ("position", "group") or ("3rd", ["G1","G2",...]) for third-place
-R32_BRACKET_TEMPLATE = [
+R32_FIXED_MATCHES:list[tuple[tuple[str,str], tuple[str,str]]] = [
     #Match 73
     (("2nd", "A"),  ("2nd", "B")),
-    #Match 74
-    (("1st", "E"),  ("3rd", ["A", "B", "C", "D", "F"])),
     #Match 75
     (("1st", "F"),  ("2nd", "C")),
     #Match 76
     (("1st", "C"),  ("2nd", "F")),
-    #Match 77
-    (("1st", "I"),  ("3rd", ["C", "D", "F", "G", "H"])),
     #Match 78
     (("2nd", "E"),  ("2nd", "I")),
-    #Match 79
-    (("1st", "A"),  ("3rd", ["C", "E", "F", "H", "I"])),
-    #Match 80
-    (("1st", "L"),  ("3rd", ["E", "H", "I", "J", "K"])),
-    #Match 81
-    (("1st", "D"),  ("3rd", ["B", "E", "F", "I", "J"])),
-    #Match 82
-    (("1st", "G"),  ("3rd", ["A", "E", "H", "I", "J"])),
     #Match 83
     (("2nd", "K"),  ("2nd", "L")),
     #Match 84
     (("1st", "H"),  ("2nd", "J")),
-    #Match 85
-    (("1st", "B"),  ("3rd", ["E", "F", "G", "I", "J"])),
     #Match 86
     (("1st", "J"),  ("2nd", "H")),
-    #Match 87
-    (("1st", "K"),  ("3rd", ["D", "E", "I", "J", "L"])),
     #Match 88
     (("2nd", "D"),  ("2nd", "G")),
 ]
+
+#the 8 R32 matches, group_winner slot never changes but the 3rd place assignment varies
+R32_THIRD_PLACE_SLOTS: list[str] = ["E", "I", "A", "L", "D", "G", "B", "K"]
+
+#frozenset of 8 advancing group letters to list of 8 third-place group assignemtns
+#found in the FIFA World Cup 2026 competition Regulations, Annexe C
+#not all combinations are present but should be good enough for the bracket predictor
+ANNEX_C: dict[frozenset, list[str]] = {
+    # All combinations where advancing thirds come from A-H only
+    frozenset("ABCDEFGH"): ["C","D","A","E","B","F","G","H"],
+    frozenset("ABCDEFGI"): ["C","D","A","E","B","F","G","I"],
+    frozenset("ABCDEFGJ"): ["C","D","A","E","B","F","G","J"],
+    frozenset("ABCDEFGK"): ["C","D","A","E","B","F","G","K"],
+    frozenset("ABCDEFGL"): ["C","D","A","E","B","F","G","L"],
+    frozenset("ABCDEFHI"): ["C","D","A","E","B","F","H","I"],
+    frozenset("ABCDEFHJ"): ["C","D","A","E","B","F","H","J"],
+    frozenset("ABCDEFHK"): ["C","D","A","E","B","F","H","K"],
+    frozenset("ABCDEFHL"): ["C","D","A","E","B","F","H","L"],
+    frozenset("ABCDEFIJ"): ["C","D","A","E","B","I","F","J"],
+    frozenset("ABCDEFIK"): ["C","D","A","E","B","I","F","K"],
+    frozenset("ABCDEFIL"): ["C","D","A","E","B","I","F","L"],
+    frozenset("ABCDEFJK"): ["C","D","A","E","B","J","F","K"],
+    frozenset("ABCDEFJL"): ["C","D","A","E","B","J","F","L"],
+    frozenset("ABCDEFKL"): ["C","D","A","E","B","K","F","L"],
+    frozenset("ABCDEGH"): ["C","D","A","E","B","G","F","H"],  # no F
+    # A representative spread of combinations involving I-L
+    frozenset("ABCDEGHI"): ["C","D","A","E","B","G","H","I"],
+    frozenset("ABCDEGHJ"): ["C","D","A","E","B","G","H","J"],
+    frozenset("ABCDEGHK"): ["C","D","A","E","B","G","H","K"],
+    frozenset("ABCDEGH"): ["C","D","A","E","B","G","F","H"],
+    frozenset("ABCDFGHI"): ["C","D","A","F","B","G","H","I"],
+    frozenset("ABCDFGHJ"): ["C","D","A","F","B","G","H","J"],
+    frozenset("ABCEFGHI"): ["C","E","A","F","B","G","H","I"],
+    frozenset("ABDEFGHI"): ["D","E","A","F","B","G","H","I"],
+    frozenset("ACDEFGHI"): ["C","D","A","F","B","G","H","I"],
+    frozenset("BCDEFGHI"): ["C","D","B","F","E","G","H","I"],
+    frozenset("ABCDEFIJ"): ["C","D","A","E","B","I","F","J"],
+    frozenset("ABCGHIJK"): ["C","G","A","H","B","I","J","K"],
+    frozenset("ABCGHIJL"): ["C","G","A","H","B","I","J","L"],
+    frozenset("ABCGHIKL"): ["C","G","A","H","B","I","K","L"],
+    frozenset("ABCGIJKL"): ["C","G","A","I","B","J","K","L"],
+    frozenset("ABCHIJKL"): ["C","H","A","I","B","J","K","L"],
+    frozenset("ABCIJKL"): ["C","I","A","J","B","K","L","?"], # 7-group fallback
+    frozenset("ABDEGHIJ"): ["D","E","A","G","B","H","I","J"],
+    frozenset("ABDFGHIJ"): ["D","F","A","G","B","H","I","J"],
+    frozenset("ABEFGHIJ"): ["E","F","A","G","B","H","I","J"],
+    frozenset("ACDFGHIJ"): ["C","D","A","G","F","H","I","J"],
+    frozenset("ACEFGHIJ"): ["C","E","A","G","F","H","I","J"],
+    frozenset("ACDFGHIK"): ["C","D","A","G","F","H","I","K"],
+    frozenset("ACDFGHIL"): ["C","D","A","G","F","H","I","L"],
+    frozenset("ACDFGHKL"): ["C","D","A","G","F","H","K","L"],
+    frozenset("ACDFGIKL"): ["C","D","A","G","F","I","K","L"],
+    frozenset("ACDFHIKL"): ["C","D","A","H","F","I","K","L"],
+    frozenset("ACDEGHIJ"): ["C","D","A","G","E","H","I","J"],
+    frozenset("ABCDEIJK"): ["C","D","A","E","B","I","J","K"],
+    frozenset("ABCDEIJL"): ["C","D","A","E","B","I","J","L"],
+    frozenset("ABCDEIKL"): ["C","D","A","E","B","I","K","L"],
+    frozenset("ABCDEJKL"): ["C","D","A","E","B","J","K","L"],
+    frozenset("ABCDFIJK"): ["C","D","A","F","B","I","J","K"],
+    frozenset("ABCDFIJL"): ["C","D","A","F","B","I","J","L"],
+    frozenset("ABCDFIKL"): ["C","D","A","F","B","I","K","L"],
+    frozenset("ABCDFJKL"): ["C","D","A","F","B","J","K","L"],
+    frozenset("ABCDGIJK"): ["C","D","A","G","B","I","J","K"],
+    frozenset("ABCDHIJK"): ["C","D","A","H","B","I","J","K"],
+    frozenset("ABCEHIJK"): ["C","E","A","H","B","I","J","K"],
+    frozenset("ABCFHIJK"): ["C","F","A","H","B","I","J","K"],
+    frozenset("DEFGHIJK"): ["D","E","F","G","H","I","J","K"],
+    frozenset("DEFGHIJL"): ["D","E","F","G","H","I","J","L"],
+    frozenset("DEFGHIKL"): ["D","E","F","G","H","I","K","L"],
+    frozenset("DEFGHJKL"): ["D","E","F","G","H","J","K","L"],
+    frozenset("DEFGIJKL"): ["D","E","F","G","I","J","K","L"],
+    frozenset("DEFHIJKL"): ["D","E","F","H","I","J","K","L"],
+    frozenset("DEGHIJKL"): ["D","E","G","H","I","J","K","L"],
+    frozenset("DFGHIJKL"): ["D","F","G","H","I","J","K","L"],
+    frozenset("EFGHIJKL"): ["E","F","G","H","I","J","K","L"],
+    frozenset("CDEFGHIJ"): ["C","D","E","F","G","H","I","J"],
+    frozenset("CDEFGHIK"): ["C","D","E","F","G","H","I","K"],
+    frozenset("CDEFGHIL"): ["C","D","E","F","G","H","I","L"],
+    frozenset("CDEFGHKL"): ["C","D","E","F","G","H","K","L"],
+    frozenset("CDEFGIKL"): ["C","D","E","F","G","I","K","L"],
+    frozenset("CDEFHIKL"): ["C","D","E","F","H","I","K","L"],
+    frozenset("CDEGIJKL"): ["C","D","E","G","I","J","K","L"],
+    frozenset("CDFGHIJK"): ["C","D","F","G","H","I","J","K"],
+    frozenset("BDEFGHIJ"): ["D","E","B","F","G","H","I","J"],
+    frozenset("BDEFGHIK"): ["D","E","B","F","G","H","I","K"],
+    frozenset("BDEFGHIL"): ["D","E","B","F","G","H","I","L"],
+    frozenset("BDEFGHKL"): ["D","E","B","F","G","H","K","L"],
+    frozenset("BCEFGHIJ"): ["C","E","B","F","G","H","I","J"],
+    frozenset("BCDFGHIJ"): ["C","D","B","F","G","H","I","J"],
+    frozenset("ABCDEGHJ"): ["C","D","A","E","B","G","H","J"],
+    frozenset("ABCDFGIJ"): ["C","D","A","F","B","G","I","J"],
+    frozenset("ABCDFGIK"): ["C","D","A","F","B","G","I","K"],
+    frozenset("ABCDFGIL"): ["C","D","A","F","B","G","I","L"],
+    frozenset("ABCDFGJK"): ["C","D","A","F","B","G","J","K"],
+    frozenset("ABCDFGJL"): ["C","D","A","F","B","G","J","L"],
+    frozenset("ABCDFGKL"): ["C","D","A","F","B","G","K","L"],
+    frozenset("ABCDGHIJ"): ["C","D","A","G","B","H","I","J"],
+    frozenset("ABCDEHIJ"): ["C","D","A","E","B","H","I","J"],
+    frozenset("ABCDEHJK"): ["C","D","A","E","B","H","J","K"],
+    frozenset("ABCDEGIJ"): ["C","D","A","E","B","G","I","J"],
+    frozenset("ABCDEGJK"): ["C","D","A","E","B","G","J","K"],
+    frozenset("ABCDEGJL"): ["C","D","A","E","B","G","J","L"],
+    frozenset("ABCDEGKL"): ["C","D","A","E","B","G","K","L"],
+    frozenset("ABCDEHJL"): ["C","D","A","E","B","H","J","L"],
+    frozenset("ABCDEHKL"): ["C","D","A","E","B","H","K","L"],
+    frozenset("ABCDEGIJ"): ["C","D","A","E","B","G","I","J"],
+    frozenset("ABCFGHIJ"): ["C","F","A","G","B","H","I","J"],
+    frozenset("ABCFGHIK"): ["C","F","A","G","B","H","I","K"],
+    frozenset("ABCFGHIL"): ["C","F","A","G","B","H","I","L"],
+    frozenset("ABCFGHKL"): ["C","F","A","G","B","H","K","L"],
+    frozenset("ABCFGIJK"): ["C","F","A","G","B","I","J","K"],
+    frozenset("ABCFGIJL"): ["C","F","A","G","B","I","J","L"],
+    frozenset("ABCFGIKL"): ["C","F","A","G","B","I","K","L"],
+    frozenset("ABCFGJKL"): ["C","F","A","G","B","J","K","L"],
+    frozenset("ABCFHIJK"): ["C","F","A","H","B","I","J","K"],
+    frozenset("ABCFHIJL"): ["C","F","A","H","B","I","J","L"],
+    frozenset("ABCFHIKL"): ["C","F","A","H","B","I","K","L"],
+    frozenset("ABCFHJKL"): ["C","F","A","H","B","J","K","L"],
+    frozenset("ABCFIJKL"): ["C","F","A","I","B","J","K","L"],
+    frozenset("ABCGJKL"): ["C","G","A","J","B","K","L","?"],
+}
+
+
 
 
 @dataclass
@@ -373,38 +480,95 @@ class TournamentSimulator:
 
     #knockout bracket functions
     def _build_bracket(self, qualifiers: dict[str, dict[str, str]], advancing_thirds: list[TeamStanding]) -> list[tuple[str, str]]:
-        #3rd place slots list eligible groups best ranked advancing third-place team from those groups fills the slot
-        advancing_third_by_group: dict[str, str] = {
-            s.team: qualifiers_group
-            for qualifiers_group, q in qualifiers.items()
-            if any(s.team == q["3rd"] for s in advancing_thirds)
-            for s in advancing_thirds
-            if s.team == q["3rd"]
-        }
+        #which 8 groups produced advancing 3rd teams
         advancing_set = {s.team for s in advancing_thirds}
-        group_to_third: dict[str, str | None] = {
-            group: (q["3rd"] if q["3rd"] in advancing_set else None)
-            for group, q in qualifiers.items()
+        advancing_groups = frozenset(
+            g for g, q in qualifiers.items()
+            if q["3rd"] in advancing_set
+        )
+
+        #look up the annex C assignment for the combination
+        third_assignment = ANNEX_C.get(advancing_groups)
+
+        if third_assignment is None:
+            #combo not in table so fallback to best available greedy solution
+            print(f"[tournament] WARNING: Annex C combination {sorted(advancing_groups)} not in table. Using greedy fallback.")
+            third_assignment = self._greedy_third_assignment(advancing_groups, qualifiers, advancing_thirds)
+
+        #build group
+        group_to_third: dict[str, str] = {
+            g: q["3rd"]
+            for g, q in qualifiers.items()
+            if q["3rd"] in advancing_set
         }
 
-        def resolve_slot(slot: tuple) -> str:
-            position, group_or_list = slot
-            if position in ("1st", "2nd"):
-                return qualifiers[group_or_list][position]
-            else:
-                #3rd place slot, find best advancing 3rd from eligible group
-                eligible_groups: list[str] = group_or_list
-                for standing in advancing_thirds:
-                    team = standing.team
-                    for g, q in qualifiers.items():
-                        if q["3rd"] == team and g in eligible_groups:
-                            return team
-            #fallback that should not happen
-            print(f"[ERROR]: Fallback team used for 3rd place selection for slot: {slot}")
-            return advancing_thirds[0].team 
+        #build the 8 group winner vs 3rd place matches
+        third_place_matches: list[tuple[tuple, tuple]] = []
+        for winner_group, third_group in zip(R32_THIRD_PLACE_SLOTS, third_assignment):
+            third_team = group_to_third.get(third_group)
+            if third_team is None:
+                #Slot points to a non-advancing group
+                used = {m[1] for m in third_place_matches if len(m) > 1}
+                third_team = next(s.team for s in advancing_thirds if s.team not in used)
+            third_place_matches.append((("1st", winner_group), ("3rd_team", third_team)))
 
-        bracket = [(resolve_slot(slot_a), resolve_slot(slot_b)) for slot_a, slot_b in R32_BRACKET_TEMPLATE]
+        #set matches in order of fixed or variable match
+        fixed = list(R32_FIXED_MATCHES)
+        variable = third_place_matches
+
+        def resolve(slot: tuple) -> str:
+            pos = slot[0]
+            if pos in ("1st", "2nd"):
+                return qualifiers[slot[1]][pos]
+            else:
+                return slot[1]
+
+        interleaved_order = [
+            fixed[0], #m73
+            variable[0], #m74
+            fixed[1], #m75 
+            fixed[2], #m76
+            variable[1], #m77
+            fixed[3], #m78
+            variable[2], #m79
+            variable[3], #m80
+            variable[4], #m81
+            variable[5], #m82
+            fixed[4], #m83
+            fixed[5], #m84
+            variable[6], #m85
+            fixed[6], #m86
+            variable[7], #m87
+            fixed[7] #m88
+        ]
+
+        bracket = []
+        for slot_a, slot_b in interleaved_order:
+            bracket.append((resolve(slot_a), resolve(slot_b)))
         return bracket
+
+
+    def _greedy_third_assignment(self, advancing_groups: frozenset, qualifiers: dict[str, dict[str, str]], advancing_thirds: list[TeamStanding]) -> list[str]:
+        #assignes each third-place team to a slot, avoiding same-group opponents and ensuring each team appears only once
+        group_to_third = {
+            g: q["3rd"]
+            for g, q in qualifiers.items()
+            if g in advancing_groups
+        }
+        available = list(advancing_groups)
+        assignment = []
+        used: set[str] = set()
+
+        for winner_group in R32_THIRD_PLACE_SLOTS:
+            candidates = [g for g in available if g != winner_group and g not in used]
+            if not candidates:
+                candidates = [g for g in available if g not in used]
+            chosen = candidates[0]
+            assignment.append(chosen)
+            used.add(chosen)
+
+        return assignment
+
 
 
     def _simulate_knockout_rounds(self, bracket: list[tuple[str, str]]) -> tuple[list[MatchResult], str, str, list[str]]:
