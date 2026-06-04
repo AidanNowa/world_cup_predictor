@@ -353,6 +353,18 @@ world_cup_predictor/
 
 ---
 
+## Methodology Notes
+ 
+- **Data**: 5 years of international results from [martj42/international_results](https://github.com/martj42/international_results), filtered to remove youth and Olympic tournaments
+- **Weighting**: matches weighted by recency (exponential decay, 1-year half-life) * tournament importance (World Cup = 4x, friendly = 0.5x)
+- **Fitting**: Poisson GLM parameters estimated via `scipy.optimize.minimize` (SLSQP) with an identifiability constraint (mean attack = 0)
+- **Extra time**: modelled as 30 minutes at 28% of normal scoring rate to account for fatigue
+- **Penalties**: modelled as a 50/50 coin flip (Appears to be a reasonable approximation of historical shootout data)
+- **Bracket**: third-place team slot assignments follow FIFA's official Annex C mapping (495 possible combinations)
+
+
+---
+
 ## Data Source
  
 Match data from **[martj42/international_results](https://github.com/martj42/international_results)** (Thank you!)
