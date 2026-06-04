@@ -492,7 +492,8 @@ class TournamentSimulator:
 
         if third_assignment is None:
             #combo not in table so fallback to best available greedy solution
-            print(f"[tournament] WARNING: Annex C combination {sorted(advancing_groups)} not in table. Using greedy fallback.")
+            #print(f"[tournament] WARNING: Annex C combination {sorted(advancing_groups)} not in table. Using greedy fallback.")
+            #removed print statement due to frequency in monte carlo sim
             third_assignment = self._greedy_third_assignment(advancing_groups, qualifiers, advancing_thirds)
 
         #build group
