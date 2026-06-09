@@ -50,6 +50,32 @@ R32_FIXED_MATCHES:list[tuple[tuple[str,str], tuple[str,str]]] = [
 #the 8 R32 matches, group_winner slot never changes but the 3rd place assignment varies
 R32_THIRD_PLACE_SLOTS: list[str] = ["E", "I", "A", "L", "D", "G", "B", "K"]
 
+
+#each tuple is (winner_index_a, winner_index_b) from the previous round 
+BRACKET_PATH: dict[str, list[tuple[int, int]]] = {
+    "R16": [
+        (1,4),
+        (0,2),
+        (3,5),
+        (6,7),
+        (9,8),
+        (10,11),
+        (13,14),
+        (12,15)
+    ],
+    "QF": [
+        (0,1),
+        (4,5),
+        (2,3),
+        (6,7)
+    ],
+    "SF": [
+        (0,1),
+        (2,3)
+    ]
+}
+
+
 #frozenset of 8 advancing group letters to list of 8 third-place group assignemtns
 #found in the FIFA World Cup 2026 competition Regulations, Annexe C
 #not all combinations are present but should be good enough for the bracket predictor
@@ -224,6 +250,8 @@ class TournamentSimulator:
         knockout_results, finalist_a, finalist_b, sf_losers = self._simulate_knockout_rounds(bracket)
 
         final_result = self.simulator.simulate_knockout_match(finalist_a, finalist_b)
+        third_place_result = self.simulator.simulate_knockout_match(sf_losers[0], sf_losers[1])
+        knockout_results.append(third_place_result)
         knockout_results.append(final_result)
 
         return TournamentResult(
@@ -247,6 +275,9 @@ class TournamentSimulator:
         knockout_results, finalist_a, finalist_b, sf_losers = self._predict_knockout_rounds(bracket)
 
         final_result = self._predict_knockout_match(finalist_a, finalist_b)
+        third_place_result = self._predict_knockout_match(sf_losers[0], sf_losers[1])
+        knockout_results.append(third_place_result)
+
         knockout_results.append(final_result)
 
         return TournamentResult(
@@ -439,26 +470,53 @@ class TournamentSimulator:
 
     def _predict_knockout_rounds(self, bracket: list[tuple[str, str]]) -> tuple[list[MatchResult], str, str, list[str]]:
         all_results: list[MatchResult] = []
-        teams = bracket
-        round_names = ["Round of 32", "Round of 16", "Quarter-Finals", "Semi-Finals"]
-        round_idx = 0
+        #teams = bracket
+        #round_names = ["Round of 32", "Round of 16", "Quarter-Finals", "Semi-Finals"]
+        #round_idx = 0
         sf_losers: list[str]=[]
 
-        while len(teams) > 1:
-            round_winners = []
-            
-            for team_a, team_b in teams:
+        def play_round(matchups: list[tuple[str, str]], round_name: str) -> list[str]:
+            winners = []
+            for team_a, team_b in matchups:
                 result = self._predict_knockout_match(team_a, team_b)
                 all_results.append(result)
-                round_winners.append(result.winner)
-
-                if round_idx < len(round_names) and round_names[round_idx] == "Semi-Finals":
+                winners.append(result.winner)
+                if round_name == "Semi-Finals":
                     sf_losers.append(result.loser())
+            return winners
+        
+        r32_winners = play_round(bracket, "Round of 32")
+    
+        r16_matchups = [(r32_winners[a], r32_winners[b]) for a, b in BRACKET_PATH["R16"]]
+        r16_winners = play_round(r16_matchups, "Round of 16")
 
-            teams = [(round_winners[i], round_winners[i + 1]) for i in range(0, len(round_winners) - 1, 2)]
-            round_idx += 1
-        finalist_a, finalist_b = teams[0]
+        qf_matchups = [(r16_winners[a], r16_winners[b]) for a, b in BRACKET_PATH["QF"]]
+        qf_winners = play_round(qf_matchups, "Quarter-Finals")
+
+        sf_matchups = [(qf_winners[a], qf_winners[b]) for a, b in BRACKET_PATH["SF"]]
+        sf_winners = play_round(sf_matchups, "Semi-Finals")
+        
+        sf_results = all_results[-2:]
+        finalist_a = sf_results[0].winner
+        finalist_b = sf_results[1].winner
+
         return all_results, finalist_a, finalist_b, sf_losers
+        #old version of knockout round
+        #while len(teams) > 1:
+        #    round_winners = []
+        #    
+        #    for team_a, team_b in teams:
+        #        result = self._predict_knockout_match(team_a, team_b)
+        #        all_results.append(result)
+        #        round_winners.append(result.winner)
+        #
+        #        if round_idx < len(round_names) and round_names[round_idx] == "Semi-Finals":
+        #            sf_losers.append(result.loser())
+        #
+        #    teams = [(round_winners[i], round_winners[i + 1]) for i in range(0, len(round_winners) - 1, 2)]
+        #    round_idx += 1
+        #finalist_a, finalist_b = teams[0]
+        #return all_results, finalist_a, finalist_b, sf_losers
 
     def _determine_qualifiers(self, group_standings: dict[str, list[TeamStanding]]) -> tuple[dict[str, dict[str, str]], list[TeamStanding]]:
         #determine 32 advancing teams (1st and 2nd plus 8 best 3rd place)
@@ -575,28 +633,62 @@ class TournamentSimulator:
     def _simulate_knockout_rounds(self, bracket: list[tuple[str, str]]) -> tuple[list[MatchResult], str, str, list[str]]:
         #simulate all rounds except final and return those finalists, and 2 semi-final losers
         all_results: list[MatchResults] = []
-        teams = bracket
+        #teams = bracket
 
-        round_names = ["Round of 32", "Round of 16", "Quarter-Finals", "Semi-Finals"]
-        round_idx = 0
+        #round_names = ["Round of 32", "Round of 16", "Quarter-Finals", "Semi-Finals"]
+        #round_idx = 0
         sf_losers: list[str] = []
-        while len(teams) > 1: #adjusted from >2 since this skipped the semi-finals
-            round_winners = []
-        
-            for team_a, team_b in teams:
+        def play_round(matchups: list[tuple[str, str]], round_name: str) -> list[str]:
+            winners = []
+            for team_a, team_b in matchups:
                 result = self.simulator.simulate_knockout_match(team_a, team_b)
                 all_results.append(result)
-                round_winners.append(result.winner)
-
-                if round_names[round_idx] == "Semi-Finals" and round_idx < len(round_names):
+                winners.append(result.winner)
+                if round_name == "Semi-Finals":
                     sf_losers.append(result.loser())
-            
-            #pair winners for next round
-            teams = [(round_winners[i], round_winners[i + 1]) for i in range(0, len(round_winners) - 1, 2)]
-            round_idx += 1
-
-        finalist_a, finalist_b = teams[0]
+            return winners
+ 
+        # R32 — 16 matches, winners indexed 0–15
+        r32_winners = play_round(bracket, "Round of 32")
+ 
+        # R16 — pair R32 winners per official bracket path
+        r16_matchups = [(r32_winners[a], r32_winners[b]) for a, b in BRACKET_PATH["R16"]]
+        r16_winners  = play_round(r16_matchups, "Round of 16")
+ 
+        # QF — pair R16 winners per official bracket path
+        qf_matchups = [(r16_winners[a], r16_winners[b]) for a, b in BRACKET_PATH["QF"]]
+        qf_winners  = play_round(qf_matchups, "Quarter-Finals")
+ 
+        # SF — pair QF winners per official bracket path
+        sf_matchups = [(qf_winners[a], qf_winners[b]) for a, b in BRACKET_PATH["SF"]]
+        play_round(sf_matchups, "Semi-Finals")  # sf_losers populated as side effect
+ 
+        finalist_a, finalist_b = qf_winners[0], qf_winners[1]  # placeholder — overridden below
+        # Correct finalists are the SF winners, extracted from last 2 results
+        sf_results  = all_results[-2:]
+        finalist_a  = sf_results[0].winner
+        finalist_b  = sf_results[1].winner
+ 
         return all_results, finalist_a, finalist_b, sf_losers
+
+        #old version of simulate knockout
+        #while len(teams) > 1: #adjusted from >2 since this skipped the semi-finals
+        #    round_winners = []
+        #
+        #    for team_a, team_b in teams:
+        #        result = self.simulator.simulate_knockout_match(team_a, team_b)
+        #        all_results.append(result)
+        #        round_winners.append(result.winner)
+        #
+        #        if round_names[round_idx] == "Semi-Finals" and round_idx < len(round_names):
+        #            sf_losers.append(result.loser())
+        #    
+            #pair winners for next round
+        #    teams = [(round_winners[i], round_winners[i + 1]) for i in range(0, len(round_winners) - 1, 2)]
+        #    round_idx += 1
+
+        #finalist_a, finalist_b = teams[0]
+        #return all_results, finalist_a, finalist_b, sf_losers
 
 #printing helpers
 def print_group_standings(group_standings: dict[str, list[TeamStanding]]) -> None:
@@ -632,6 +724,7 @@ def print_bracket(result: TournamentResult) -> None:
         ("Round of 16", 8),
         ("Quarter-Finals", 4),
         ("Semi-Finals", 2),
+        ("Third Place", 1),
         ("Final", 1)
     ]
     
@@ -640,6 +733,7 @@ def print_bracket(result: TournamentResult) -> None:
     print("   2026 WORLD CUP  (PREDICTED BRACKET)")
     print("=" * 55)
 
+    third_place_winner = None
     for round_name, n_matches in round_definitions:
         round_results = results[idx: idx + n_matches]
         if not round_results:
@@ -648,16 +742,27 @@ def print_bracket(result: TournamentResult) -> None:
         print(f"   {round_name}")
         print('-' * 55)
         for r in round_results:
-            winner = "DRAW"
-            if r.winner: 
-                win_indicator = f"-> {r.winner}"
+            win_indicator = f"-> {r.winner}" if r.winner else "DRAW"
+            if r.went_to_pens:
+                win_indicator += " (pens)"
+            elif r.went_to_et:
+                win_indicator += " (AET)"
+            #if r.winner: 
+            #    win_indicator = f"-> {r.winner}"
             print(f"   {r.team_a} {r.goals_a} - {r.goals_b} { r.team_b}  {win_indicator}")
+            if round_name == "Third Place":
+                third_place_winner = r.winner
         idx += n_matches
 
     print("\n" + "=" * 55)
     print(f"\nWinner: {result.winner}")
     print(f"Runner-up: {result.runner_up}")
-    print(f"Third place teams: {', '.join(result.third_place)}") 
+    if third_place_winner:
+        third_place_loser = next(t for t in result.third_place if t != third_place_winner)
+        print(f"Third Place: {third_place_winner}")
+        print(f"Fourth Place: {third_place_loser}")
+    elif result.third_place:
+        print(f"Third place teams: {', '.join(result.third_place)}") 
     print("=" * 55)
 
 if __name__ == "__main__":
