@@ -72,7 +72,10 @@ world_cup_predictor/
 │   └── monte_carlo_results.csv
 └── README.md
 ```
- 
+
+---
+ ### Current Bug
+ FIFA Tournament structure is different than what is implemented, after the round of 32 a refactor is needed.
 ---
  
 ## Sample Output
