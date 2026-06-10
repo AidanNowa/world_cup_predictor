@@ -164,7 +164,7 @@ class MonteCarloSimulator:
 
 
 if __name__ == "__main__":
-    df = load_and_prepare(Path("data/results.csv"))
+    df = load_and_prepare(Path("data/results.csv"), Path("data/elo_ratings.csv"))
     model = PoissonModel().fit(df)
     simulator = MatchSimulator(model)
     tournament = TournamentSimulator(simulator)

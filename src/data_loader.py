@@ -21,6 +21,8 @@ TOURNAMENT_WEIGHTS = {
 } 
 DEFAULT_WEIGHT = 1.0 
 
+GLOBAL_MEAN_ELO = 1550.0
+
 
 def load_raw_data(filepath: str | Path) -> pd.DataFrame:
     df = pd.read_csv(filepath, parse_dates=["date"])
@@ -73,9 +75,42 @@ def add_tournament_weight(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def add_elo_weight(df: pd.DataFrame, elo_filepath: str | Path | None = None) -> pd.DataFrame:
+    #add an oppent-quality weight based on both teams' elo raitings (static for most recent elo)
+    df = df.copy()
+
+    if elo_filepath is None or not Path(elo_filepath).exists():
+        print("[data_loader] WARNING: ELO file not found. Setting elo_weight=1.0 for all matches.")
+        df["home_elo"] = GLOBAL_MEAN_ELO
+        df["away_elo"] = GLOBAL_MEAN_ELO
+        df["elo_weight"] = 1.0
+        return df
+
+    elo_raw = pd.read_csv(elo_filepath)
+    elo_map: dict[str, float] = dict(zip(elo_raw["nation"].str.strip(), elo_raw["elo_rating"].astype(float)))
+
+    df["home_elo"] = df["home_team"].map(elo_map).fillna(GLOBAL_MEAN_ELO)
+    df["away_elo"] = df["away_team"].map(elo_map).fillna(GLOBAL_MEAN_ELO)
+
+    #warning for missing teams
+    all_teams = pd.unique(df[["home_team", "away_team"]].values.ravel())
+    missing = [t for t in all_teams if t not in elo_map]
+    if missing:
+        print(f"[data_loader] {len(missing)} teams not found in ELO file. Using {GLOBAL_MEAN_ELO:.0f} fallback: {sorted(missing)[:10]}" + ("..." if len(missing) > 10 else ""))
+
+    #attempt to normalize mean ELO of both teams
+    df["elo_weight"] = (df["home_elo"] + df["away_elo"]) / (2 * GLOBAL_MEAN_ELO)
+    low = df["elo_weight"].quantile(0.05)
+    high = df["elo_weight"].quantile(0.95)
+    print(f"[data_loader] ELO weight range (5th-95th pct): {low:.2f} - {high:.2f}")
+
+    return df
+    
+
+
 def add_combined_weight(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
-    df["weight"] = df["recency_weight"] * df["tournament_weight"]
+    df["weight"] = df["recency_weight"] * df["tournament_weight"] * df["elo_weight"]
     df["weight"] = df["weight"] / df["weight"].mean() #normalize
     return df
 
@@ -96,7 +131,7 @@ def get_all_teams(df: pd.DataFrame) -> list[str]:
     return sorted(teams.tolist())
 
 
-def load_and_prepare(filepath: str | Path, years: int=5, half_life_days: int=365, exclude_tournaments: list[str] | None=None, min_matches: int=8) -> pd.DataFrame:
+def load_and_prepare(filepath: str | Path, elo_filepath: str | Path, years: int=5, half_life_days: int=365, exclude_tournaments: list[str] | None=None, min_matches: int=8) -> pd.DataFrame:
     df = load_raw_data(filepath)
     df = filter_by_date(df, years=years)
     df = filter_tournaments(df, exclude=exclude_tournaments)
@@ -104,6 +139,7 @@ def load_and_prepare(filepath: str | Path, years: int=5, half_life_days: int=365
     df = drop_incomplete_rows(df)
     df = add_recency_weight(df, half_life_days=half_life_days)
     df = add_tournament_weight(df)
+    df = add_elo_weight(df, elo_filepath=elo_filepath)
     df = add_combined_weight(df)
 
     print(f"[data_loader] Final dataset: {len(df):,} matches, {df['home_team'].nunique()} unique teams.")
@@ -119,6 +155,11 @@ def summarize(df: pd.DataFrame) -> None:
     print(f"Avg goals/game : {(df['home_score'] + df['away_score']).mean():.2f}")
     print(f"\nTop tournaments by match count:")
     print(df["tournament"].value_counts().head(10).to_string())
+    print(f"\nELO weight distribution:")
+    print(df["elo_weight"].describe().round(3).to_string())
+    print(f"\nHighest ELO matches (most informative):")
+    top = df.nlargest(5, "elo_weight")[["date", "home_team", "away_team", "home_elo", "away_elo", "elo_weight"]]
+    print(top.to_string(index=False))
     print(f"\nWeight distribution:")
     print(df["weight"].describe().round(3).to_string())
     print("=======================\n")
@@ -126,8 +167,9 @@ def summarize(df: pd.DataFrame) -> None:
 
 if __name__ == "__main__":
     DATA_PATH = Path("data/results.csv")
+    ELO_PATH = Path("data/elo_ratings.csv")
 
-    df = load_and_prepare(filepath=DATA_PATH, years=5, half_life_days=365)
+    df = load_and_prepare(filepath=DATA_PATH, elo_filepath=ELO_PATH, years=5, half_life_days=365)
 
     summarize(df)
     
