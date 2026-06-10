@@ -13,6 +13,7 @@ class PoissonModel:
         self.teams: list[str] = []
         self.params: dict[str, dict[str, float]] = {}
         self.intercept: float = 0.0
+        self.rho: float = 0.0 #dixon-coles low-score correction
         self._team_index: dict[str, int] = {} #team name mapping to index in parameter vector
 
     def fit(self, df: pd.DataFrame) -> "Poisson Model":
@@ -26,9 +27,10 @@ class PoissonModel:
         #index 0 = intercept (log baseline goals)
         #index 1, ..., n = attack parameters (one per team)
         #index n+1, ..., 2n = defense parameters (one per team)
-
+        #index 2n+1: rho (dixon-coles low-score correction)
+        
         #initial guess: intercept = log(1.5 goals), all attack/defense = 0
-        x0 = np.zeros(1 + 2*n)
+        x0 = np.zeros(1 + 2*n + 1)
         x0[0] = np.log(1.5)
 
         #constraint: mean attack = 0 (pins the scale os the model is identifiable)
@@ -38,6 +40,13 @@ class PoissonModel:
             "fun": lambda x: x[1: n+1].mean() #mean attack == 0
         }
 
+        bounds = (
+            [(None, None)]
+            + [(None, None)] * n
+            + [(None, None)] * n
+            + [(-0.99, 0.99)] #rho must say in (-1,1) to keep tau correction valid
+        )
+
         self._pbar = tqdm(desc="Fitting model", unit=" evals", colour="green")
 
         result = minimize(
@@ -46,7 +55,8 @@ class PoissonModel:
             args=(df,),
             method="SLSQP",
             constraints=constraints,
-            options={"maxiter": 200, "ftol": 1e-6}
+            bounds=bounds,
+            options={"maxiter": 500, "ftol": 1e-9}
         )
 
         self._pbar.close()
@@ -56,7 +66,7 @@ class PoissonModel:
             print(f"Message: {result.message}")
     
         self._unpack_params(result.x)
-        print("[poisson_model] Fitting complete.")
+        print(f"[poisson_model] Fitting complete.\nrho (Dixon-Coles) = {self.rho:.4f}")
         return self #allows for model = PoissonModel().fit(df)
 
     
@@ -168,7 +178,7 @@ class PoissonModel:
 
 
 if __name__ == "__main__":
-    df = load_and_prepare(Path("data/results.csv"))
+    df = load_and_prepare(Path("data/results.csv"), Path("data/elo_ratings.csv"))
 
     model = PoissonModel().fit(df)
     print("\nTop 15 teams by model strength:")
